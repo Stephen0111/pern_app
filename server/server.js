@@ -4,6 +4,26 @@ const passport = require("passport");
 const cors = require("cors");
 const path = require("path"); // Keep path if used for other purposes, but not for static serving now
 
+const session = require("express-session");
+const RedisStore = require("connect-redis").default;
+const { createClient } = require("redis");
+
+const redisClient = createClient({
+  legacyMode: true,
+  url: process.env.REDIS_URL || "redis://localhost:6379",
+});
+redisClient.connect().catch(console.error);
+
+app.use(
+  session({
+    store: new RedisStore({ client: redisClient }),
+    secret: "your_secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false }, // Set to true if using HTTPS
+  })
+);
+
 const authRoutes = require("./routes/authroute.js");
 console.log("authRoutes:", authRoutes);
 const fs = require("fs");
