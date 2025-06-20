@@ -1,0 +1,278 @@
+/* LandingPage.css */
+
+/* General Body/HTML Styles */
+
+
+/* Main Container for the entire page */
+.landing-page-container {
+    height: 100vh; /* Full viewport height */
+    display: flex;
+    flex-direction: column; /* Stack top bar and main content vertically */
+    overflow: hidden; /* Prevent outer scroll */
+    background-color: #f8f9fa; /* Light background */
+}
+
+/* Top Bar Styling (Logo, Search, Cart) */
+.top-bar {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    z-index: 1000;
+    position: relative; /* For z-index to work */
+    padding: 1rem 2rem; /* Adjusted padding */
+}
+
+.logo-placeholder h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+}
+
+.search-bar {
+    position: relative;
+    flex-grow: 0.5; /* Allow it to take some space */
+    max-width: 400px; /* Limit width */
+}
+
+.search-input {
+    border-radius: 20px;
+    padding-right: 2.5rem; /* Space for icon */
+    border-color: #ced4da;
+}
+
+.search-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    font-size: 1rem;
+}
+
+.cart-icon-container {
+    position: relative;
+    cursor: pointer;
+    margin-left: 20px;
+}
+
+.cart-icon {
+    font-size: 1.8rem;
+    color: #333;
+}
+
+.cart-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    padding: 0.4em 0.6em;
+    font-size: 0.7em;
+    border-radius: 50%;
+    line-height: 1;
+}
+
+/* Main Content Row */
+.main-content-row {
+    flex-grow: 1; /* Makes this row take up remaining vertical space */
+    overflow-y: auto; /* Allow scrolling for the main content if it overflows */
+    overflow-x: hidden;
+    padding: 0; /* Remove default row padding */
+    margin: 0; /* Remove default row margin */
+}
+
+/* Sidebar Styling */
+.sidebar {
+    background-color: #ffffff;
+    border-right: 1px solid #eee; /* Light border */
+    box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+    padding: 1.5rem !important; /* !important to override default bootstrap padding */
+    overflow-y: auto; /* Allow sidebar content to scroll if too long */
+    height: 100%; /* Take full height of its parent row */
+    position: relative; /* For z-index */
+    z-index: 999; /* Below top-bar, above main content */
+}
+
+.sidebar-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #555;
+    text-transform: uppercase;
+}
+
+.filter-card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    overflow: hidden; /* Ensures header/body fit well */
+}
+
+.filter-card-header {
+    background-color: #f1f3f5; /* Light grey header */
+    color: #333;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.filter-card-body {
+    padding: 1rem;
+}
+
+/* Vertical Separator Line (between sidebar and product grid) */
+.separator-line-col {
+    padding: 0; /* Remove col padding */
+    max-width: 1px; /* Make it super thin */
+    background-color: #e0e0e0; /* Color of the line */
+    height: 100%;
+}
+
+/* Product Grid Styling */
+.product-grid-container {
+    background-color: #f8f9fa;
+    padding: 1.5rem !important; /* !important to override default bootstrap padding */
+    overflow-y: auto; /* Allow product grid to scroll */
+}
+
+.product-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    cursor: pointer;
+    overflow: hidden; /* Ensures image fits within rounded corners */
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.12);
+}
+
+.product-card-body {
+    padding: 1rem;
+    position: relative; /* For heart icon positioning */
+}
+
+.product-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.25rem;
+    white-space: nowrap; /* Keep title on one line */
+    overflow: hidden; /* Hide overflow text */
+    text-overflow: ellipsis; /* Add ellipsis */
+}
+
+.product-card-brand {
+    font-size: 0.9rem;
+    color: #777;
+    margin-bottom: 0.5rem;
+}
+
+.product-card-price {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #007bff; /* Primary color for price */
+    margin-bottom: 0.75rem;
+}
+
+.product-card-meta {
+    font-size: 0.85rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.star-icon {
+    color: #ffc107; /* Gold color for stars */
+}
+
+.add-to-cart-btn {
+    border-radius: 5px;
+    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
+}
+
+.wishlist-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #dc3545; /* Red for heart */
+    font-size: 1.2rem;
+    padding: 5px;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+    cursor: pointer;
+}
+
+.wishlist-btn:hover {
+    opacity: 1;
+}
+
+.no-products-message {
+    text-align: center;
+    margin-top: 50px;
+    font-size: 1.2rem;
+    color: #777;
+}
+
+/* Product Details Modal Styling */
+.modal-product-img {
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.product-details-pre {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 0.9rem;
+    white-space: pre-wrap; /* Wrap long lines */
+    word-wrap: break-word; /* Break words for overflow */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 767.98px) {
+    /* Mobile styles */
+    .sidebar {
+        border-right: none;
+        border-bottom: 1px solid #eee;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        height: auto; /* Allow height to adjust to content */
+        padding-bottom: 1rem !important;
+    }
+
+    .separator-line-col {
+        display: none !important; /* Hide vertical line on small screens */
+    }
+
+    .main-content-row {
+        flex-direction: column; /* Stack columns vertically */
+    }
+
+    .product-grid-container {
+        padding-top: 1rem !important;
+    }
+
+    .top-bar {
+        flex-direction: column; /* Stack items vertically on small screens */
+        align-items: flex-start !important; /* Align to start */
+        gap: 10px;
+    }
+
+    .search-bar {
+        width: 100%; /* Full width search bar */
+        max-width: none;
+    }
+
+    .cart-icon-container {
+        margin-left: 0; /* Remove left margin */
+        align-self: flex-end; /* Align cart to the right */
+        margin-top: -30px; /* Pull it up a bit */
+    }
+}

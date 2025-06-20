@@ -1,0 +1,63 @@
+.auth-bg {
+    background: linear-gradient(135deg, #A1C4FD 0%, #C2E9FB 100%);
+    min-height: 100vh;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .auth-card {
+    width: 100%;
+    max-width: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 100vh;
+  }
+  
+  .auth-side-panel {
+    background: #2A5D9F;
+    padding: 3rem;
+    text-align: center;
+    height: 100vh;
+  }
+  
+  .auth-side-panel h2 {
+    font-size: 2rem;
+  }
+  
+  .auth-side-panel p {
+    font-size: 1.1rem;
+  }
+  
+  .nav-pills .nav-link {
+    color: #fff;
+    font-size: 1.1rem;
+    opacity: 0.8;
+  }
+  
+  .nav-pills .nav-link.active {
+    opacity: 1;
+    background: transparent;
+    border-bottom: 2px solid #fff;
+  }
+  
+  .form-label {
+    font-weight: 500;
+  }
+  
+  .form-control::placeholder {
+    opacity: 0.6;
+    font-size: 0.95rem;
+  }
+  
+  @media (max-width: 768px) {
+    .auth-card {
+      flex-direction: column;
+    }
+  
+    .auth-side-panel {
+      height: auto;
+      padding: 2rem 1rem;
+    }
+  }
+  
