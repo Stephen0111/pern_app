@@ -4,11 +4,10 @@ const passport = require("passport");
 const cors = require("cors");
 const path = require("path"); // Keep path if used for other purposes, but not for static serving now
 
-const session = require("express-session");
 const RedisStore = require("connect-redis").default;
 const { createClient } = require("redis");
 
-const redisClient = createClient({
+/*const redisClient = createClient({
   legacyMode: true,
   url: process.env.REDIS_URL || "redis://localhost:6379",
 });
@@ -20,10 +19,10 @@ app.use(
     secret: "your_secret",
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false }, // Set to true if using HTTPS
+    cookie: { secure: true }, // Set to true if using HTTPS
   })
 );
-
+*/
 const authRoutes = require("./routes/authroute.js");
 console.log("authRoutes:", authRoutes);
 const fs = require("fs");
@@ -31,6 +30,33 @@ const fs = require("fs");
 const initializePassport = require("./auth/passportauth");
 
 const app = express();
+
+const pgSession = require("connect-pg-simple")(session);
+const { Pool } = require("pg");
+
+const pgPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  // Optional: ssl config for Render or Heroku Postgres
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
+
+app.use(
+  session({
+    store: new pgSession({
+      pool: pgPool,
+      tableName: "user_sessions", // optional, defaults to "session"
+    }),
+    secret: process.env.SESSION_SECRET || "your_secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production", // true if using HTTPS
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+    },
+  })
+);
 // --- IMPORTANT: Port Configuration for Render ---
 // Use the PORT environment variable provided by Render, fallback to 5000 for local development.
 const PORT = process.env.PORT || 5000;
