@@ -8,7 +8,7 @@ CREATE TABLE users (
   password VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE "session" (
+CREATE TABLE "user_sessions" (
   "sid" varchar NOT NULL COLLATE "default",
   "sess" json NOT NULL,
   "expire" timestamp(6) NOT NULL
