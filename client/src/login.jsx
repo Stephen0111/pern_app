@@ -154,7 +154,7 @@ const Login = () => {
             className="auth-side-panel text-white d-none d-md-flex flex-column justify-content-center align-items-center"
           >
             <img
-              src="/client/ZINGA.png"
+              src="https://pern-app-frontend-ml6m.onrender.com/ZINGA.png"
               alt="Logo"
               className="mb-4 logo"
               style={{ width: "120px", height: "auto" }}
