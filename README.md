@@ -24,7 +24,7 @@
 This project is a robust and scalable e-commerce web application built using the **PERN stack** (PostgreSQL, Express.js, React, Node.js). It's designed to showcase a modern approach to online retail, featuring dynamic product listings, efficient search/filter/sort capabilities, and secure user authentication. The application uses a dummy JSON API for populating product data, making it easy to get started and demonstrate core functionalities without complex external integrations for product sourcing.
 
 ---
-
+![Register](./login.png)
 ## Features
 
 * **Product Listing:** Browse a wide range of products fetched from a dummy JSON API.
