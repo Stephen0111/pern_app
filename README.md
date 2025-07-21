@@ -15,17 +15,7 @@
 * [Features](#features)
 * [Technologies Used](#technologies-used)
 * [Project Structure](#project-structure)
-* [Getting Started](#getting-started)
-    * [Prerequisites](#prerequisites)
-    * [Backend Setup](#backend-setup)
-    * [Frontend Setup](#frontend-setup)
-* [Usage](#usage)
-* [Authentication](#authentication)
-* [API Endpoints](#api-endpoints)
-* [Future Enhancements](#future-enhancements)
-* [Contributing](#contributing)
-* [License](#license)
-* [Contact](#contact)
+
 
 ---
 
