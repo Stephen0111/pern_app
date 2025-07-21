@@ -69,7 +69,7 @@ This project leverages the power of the PERN stack, along with several key libra
 * **React.js:** A JavaScript library for building user interfaces.
 * **React Router DOM:** For declarative routing in React applications.
 * **Axios:** Promise-based HTTP client for the browser and node.js.
-* **React-Bootstrap
+* React-Bootstrap
 * **Dummy JSON API:** Used for fetching product data (e.g., `https://dummyjson.com/products`).
 
 ---
