@@ -1,43 +1,37 @@
 from airflow import DAG
 from airflow.decorators import task
 from airflow.utils.dates import days_ago
-import json
-import base64
-from google.cloud import bigquery
+from google.cloud import bigquery, storage
+import os
 
 PROJECT_ID = "sales-data-pipeline-480101"
 BUCKET_NAME = "sales-data-pipeline-bucket"
+LANDING_FOLDER = "landing/"
+ARCHIVE_FOLDER = "archive/"
 DATASET = "sales_raw"
 TABLE = "raw_sales"
 
 with DAG(
-    dag_id="retail_sales_event_driven",
+    dag_id="retail_sales_scheduled_ingestion",
     start_date=days_ago(1),
-    schedule_interval=None,
+    schedule_interval="*/5 * * * *",  # run every 5 minutes
     catchup=False,
     max_active_runs=1,
-    tags=["gcs", "bigquery", "event-driven"],
+    tags=["gcs", "bigquery", "scheduled"],
 ) as dag:
 
     @task
-    def extract_filename(pubsub_message):
-        """Extract GCS filename from Pub/Sub message"""
-        if not pubsub_message:
-            raise ValueError("No Pub/Sub message received")
-
-        encoded_data = pubsub_message.get("message", {}).get("data")
-        if not encoded_data:
-            raise ValueError("No data in Pub/Sub message")
-
-        decoded_data = base64.b64decode(encoded_data).decode("utf-8")
-        payload = json.loads(decoded_data)
-        filename = payload.get("name")
-        if not filename:
-            raise ValueError("No filename found in message payload")
-        return filename
+    def list_files():
+        """List all CSV files in the landing folder"""
+        client = storage.Client(project=PROJECT_ID)
+        bucket = client.bucket(BUCKET_NAME)
+        blobs = bucket.list_blobs(prefix=LANDING_FOLDER)
+        files = [blob.name for blob in blobs if blob.name.endswith(".csv")]
+        return files
 
     @task
-    def load_to_bigquery(filename: str):
+    def load_file_to_bq(filename: str):
+        """Load a single CSV file into BigQuery"""
         client = bigquery.Client(project=PROJECT_ID)
         table_id = f"{PROJECT_ID}.{DATASET}.{TABLE}"
 
@@ -53,6 +47,19 @@ with DAG(
         load_job.result()
         print(f"Loaded {filename} into BigQuery table {table_id}")
 
-    # Normal function calls, no expand()
-    filename = extract_filename(pubsub_message="{{ dag_run.conf }}")
-    load_to_bigquery(filename)
+    @task
+    def move_to_archive(filename: str):
+        """Move processed file to archive folder"""
+        client = storage.Client(project=PROJECT_ID)
+        bucket = client.bucket(BUCKET_NAME)
+        source_blob = bucket.blob(filename)
+        destination_blob_name = filename.replace(LANDING_FOLDER, ARCHIVE_FOLDER, 1)
+        bucket.rename_blob(source_blob, destination_blob_name)
+        print(f"Moved {filename} to {destination_blob_name}")
+
+    # DAG Flow
+    files = list_files()
+    for f in files:
+        bq = load_file_to_bq(f)
+        move_to_archive(f)
+        bq >> move_to_archive(f)
