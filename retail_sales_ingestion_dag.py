@@ -2,7 +2,6 @@ from airflow import DAG
 from airflow.decorators import task
 from airflow.utils.dates import days_ago
 from google.cloud import bigquery, storage
-import os
 
 PROJECT_ID = "sales-data-pipeline-480101"
 BUCKET_NAME = "sales-data-pipeline-bucket"
@@ -46,6 +45,7 @@ with DAG(
         load_job = client.load_table_from_uri(uri, table_id, job_config=job_config)
         load_job.result()
         print(f"Loaded {filename} into BigQuery table {table_id}")
+        return filename  # important for next task mapping
 
     @task
     def move_to_archive(filename: str):
@@ -57,9 +57,10 @@ with DAG(
         bucket.rename_blob(source_blob, destination_blob_name)
         print(f"Moved {filename} to {destination_blob_name}")
 
-    # DAG Flow
+    # -------------------------
+    # DAG Flow with Task Mapping
+    # -------------------------
     files = list_files()
-    for f in files:
-        bq = load_file_to_bq(f)
-        move_to_archive(f)
-        bq >> move_to_archive(f)
+    # Create dynamic tasks for each file
+    loaded_files = load_file_to_bq.expand(filename=files)
+    move_to_archive.expand(filename=loaded_files)
