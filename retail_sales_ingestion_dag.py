@@ -61,6 +61,9 @@ with DAG(
             skip_leading_rows=1,
             autodetect=True,
             write_disposition="WRITE_APPEND",
+            # FIX: Use Character Map V2 to automatically handle invalid column names 
+            # like 'fuel.sys' by replacing '.' with '_'
+            field_name_character_map="V2",
         )
 
         uri = f"gs://{BUCKET_NAME}/{filename}"
