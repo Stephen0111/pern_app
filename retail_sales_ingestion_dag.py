@@ -3,8 +3,7 @@ from __future__ import annotations
 from airflow import DAG
 from airflow.decorators import task
 from airflow.utils.dates import days_ago
-# Note: You must ensure 'google-cloud-bigquery' and 'google-cloud-storage' 
-# libraries are installed in your Airflow environment for these imports to work.
+
 from google.cloud import bigquery, storage
 
 PROJECT_ID = "sales-data-pipeline-480101"
@@ -17,8 +16,7 @@ TABLE = "raw_sales"
 with DAG(
     dag_id="retail_sales_scheduled_ingestion",
     start_date=days_ago(1),
-    # schedule_interval uses cron syntax: run every 5 minutes (e.g., 00:05, 00:10, etc.)
-    schedule_interval="*/5 * * * *", 
+    schedule_interval="*/5 * * * *",  # every 5 minutes
     catchup=False,
     max_active_runs=1,
     tags=["gcs", "bigquery", "scheduled"],
@@ -27,31 +25,28 @@ with DAG(
     @task
     def list_files():
         """
-        Lists all CSV files in the landing folder and returns the list of file paths.
-        This list will be pushed to XCom for dynamic mapping.
+        List CSV files in landing folder.
         """
-        # Note: This client automatically uses the Airflow connection/service account
         client = storage.Client(project=PROJECT_ID)
         bucket = client.bucket(BUCKET_NAME)
-        # Add a trailing slash to prefix to only list files *inside* the folder
-        blobs = bucket.list_blobs(prefix=LANDING_FOLDER) 
-        
-        # Filter for non-zero size CSV files (to exclude the folder itself)
+
+        blobs = bucket.list_blobs(prefix=LANDING_FOLDER)
+
         files = [
-            blob.name for blob in blobs 
+            blob.name for blob in blobs
             if blob.name.endswith(".csv") and blob.size > 0
         ]
-        
-        # Log if no files are found (optional, but helpful for debugging)
+
         if not files:
-            print("No new CSV files found in the landing folder.")
-        
+            print("No new CSV files found in landing folder.")
+
         return files
 
     @task
     def load_file_to_bq(filename: str):
         """
-        Loads a single CSV file specified by the mapped 'filename' into BigQuery.
+        Loads a single CSV file into BigQuery using Character Map V2
+        to automatically fix invalid column names (e.g. fuel.sys → fuel_sys).
         """
         client = bigquery.Client(project=PROJECT_ID)
         table_id = f"{PROJECT_ID}.{DATASET}.{TABLE}"
@@ -61,42 +56,43 @@ with DAG(
             skip_leading_rows=1,
             autodetect=True,
             write_disposition="WRITE_APPEND",
-            # FIX: Use Character Map V2 to automatically handle invalid column names 
-            # like 'fuel.sys' by replacing '.' with '_'
-            field_name_character_map="V2",
+            field_name_character_map="CHARACTER_MAP_V2",  # <-- FIXED
         )
 
         uri = f"gs://{BUCKET_NAME}/{filename}"
-        load_job = client.load_table_from_uri(uri, table_id, job_config=job_config)
-        load_job.result()
+
+        load_job = client.load_table_from_uri(
+            uri,
+            table_id,
+            job_config=job_config
+        )
+
+        load_job.result()  # Wait for job to finish
+
         print(f"Loaded {filename} into BigQuery table {table_id}")
-        return filename  # Return the filename for the next task to use
+        return filename
 
     @task
     def move_to_archive(filename: str):
         """
-        Moves the processed file (specified by the mapped 'filename') to the archive folder.
+        Moves processed file from landing → archive.
         """
         client = storage.Client(project=PROJECT_ID)
         bucket = client.bucket(BUCKET_NAME)
+
         source_blob = bucket.blob(filename)
-        destination_blob_name = filename.replace(LANDING_FOLDER, ARCHIVE_FOLDER, 1)
-        
-        # Copy the file and then delete the source
-        new_blob = bucket.copy_blob(source_blob, bucket, destination_blob_name)
+        destination_blob = filename.replace(LANDING_FOLDER, ARCHIVE_FOLDER, 1)
+
+        # Copy then delete
+        bucket.copy_blob(source_blob, bucket, destination_blob)
         source_blob.delete()
-        
-        print(f"Archived {filename} to {new_blob.name}")
+
+        print(f"Archived {filename} → {destination_blob}")
 
     # -------------------------
-    # DAG Flow with Task Mapping
+    # DAG Flow (Task Mapping)
     # -------------------------
-    # 1. Get the XComArg representing the list of files
-    files_to_process = list_files() 
 
-    # 2. Dynamically map the load_file_to_bq task based on the list of files
+    files_to_process = list_files()
     loaded_files = load_file_to_bq.expand(filename=files_to_process)
-
-    # 3. Dynamically map the move_to_archive task based on the output of the load task
-    # This automatically creates a dependency chain (load_file_to_bq[i] >> move_to_archive[i])
     move_to_archive.expand(filename=loaded_files)
