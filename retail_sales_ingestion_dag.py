@@ -52,6 +52,7 @@ def upload_cleaned_csv(**context):
     cleaned_blob = bucket.blob(CLEANED_FILE_PATH)
     cleaned_blob.upload_from_string(cleaned_csv_data, content_type="text/csv")
 
+    # Return path to push to XCom
     return CLEANED_FILE_PATH
 
 
@@ -61,9 +62,12 @@ def upload_cleaned_csv(**context):
 def load_file_to_bq(**context):
     client = bigquery.Client()
 
-    cleaned_path = context["ti"].xcom_pull(task_ids="wait_for_file_and_upload")
-    uri = f"gs://{BUCKET_NAME}/{cleaned_path}"
+    # Pull the cleaned CSV path from the previous task
+    cleaned_path = context["ti"].xcom_pull(task_ids="upload_cleaned_csv")
+    if not cleaned_path:
+        raise ValueError("No cleaned file path found in XCom from upload_cleaned_csv task.")
 
+    uri = f"gs://{BUCKET_NAME}/{cleaned_path}"
     table_id = f"{PROJECT_ID}.{DATASET}.{TABLE}"
 
     job_config = bigquery.LoadJobConfig(
