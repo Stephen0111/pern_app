@@ -31,28 +31,31 @@ def clean_column_names(df):
 
 
 # ----------------------------------
-# 2. Task: Download CSV, clean it, re-upload
+# 2. Task: Download CSV, clean it, append to cleaned CSV
 # ----------------------------------
 def upload_cleaned_csv(**context):
     storage_client = storage.Client()
     bucket = storage_client.bucket(BUCKET_NAME)
-    blob = bucket.blob(RAW_FILE_PATH)
-
-    # Read CSV into Pandas
-    csv_data = blob.download_as_text()
-    df = pd.read_csv(StringIO(csv_data))
-
-    # Clean column names
-    df = clean_column_names(df)
-
-    # Save cleaned CSV into memory
-    cleaned_csv_data = df.to_csv(index=False)
-
-    # Upload cleaned file to GCS
+    raw_blob = bucket.blob(RAW_FILE_PATH)
     cleaned_blob = bucket.blob(CLEANED_FILE_PATH)
-    cleaned_blob.upload_from_string(cleaned_csv_data, content_type="text/csv")
 
-    # Return path to push to XCom
+    # Read the new CSV into Pandas
+    csv_data = raw_blob.download_as_text()
+    df_new = pd.read_csv(StringIO(csv_data))
+    df_new = clean_column_names(df_new)
+
+    # Check if a cleaned CSV already exists
+    if cleaned_blob.exists():
+        existing_csv = cleaned_blob.download_as_text()
+        df_existing = pd.read_csv(StringIO(existing_csv))
+        # Append new data to existing data
+        df_combined = pd.concat([df_existing, df_new], ignore_index=True)
+    else:
+        df_combined = df_new
+
+    # Upload the combined cleaned CSV to GCS
+    cleaned_blob.upload_from_string(df_combined.to_csv(index=False), content_type="text/csv")
+
     return CLEANED_FILE_PATH
 
 
