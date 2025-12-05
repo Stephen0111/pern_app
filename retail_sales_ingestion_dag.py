@@ -1,10 +1,8 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
-from airflow.models import Variable
-
+from airflow.providers.google.cloud.sensors.gcs import GCSObjectExistenceSensor
 from google.cloud import storage, bigquery
-
 import pandas as pd
 from io import StringIO
 
@@ -24,12 +22,6 @@ CLEANED_FILE_PATH = "processed/autos_cleaned.csv"
 # 1. Clean column names function
 # ----------------------------------
 def clean_column_names(df):
-    """
-    Converts column names by:
-    - replacing all dots/symbols with underscores
-    - lowering all case
-    - ensuring compatibility with BigQuery naming rules
-    """
     df.columns = (
         df.columns
         .str.replace(r"[^0-9a-zA-Z_]+", "_", regex=True)
@@ -69,7 +61,7 @@ def upload_cleaned_csv(**context):
 def load_file_to_bq(**context):
     client = bigquery.Client()
 
-    cleaned_path = context["ti"].xcom_pull(task_ids="upload_cleaned_csv")
+    cleaned_path = context["ti"].xcom_pull(task_ids="wait_for_file_and_upload")
     uri = f"gs://{BUCKET_NAME}/{cleaned_path}"
 
     table_id = f"{PROJECT_ID}.{DATASET}.{TABLE}"
@@ -95,6 +87,16 @@ with DAG(
     catchup=False,
 ) as dag:
 
+    # Sensor: Wait until raw CSV exists in GCS
+    wait_for_raw_file = GCSObjectExistenceSensor(
+        task_id="wait_for_raw_file",
+        bucket=BUCKET_NAME,
+        object=RAW_FILE_PATH,
+        poke_interval=60,      # check every 60 seconds
+        timeout=3600,          # fail after 1 hour if file doesn't appear
+        mode="poke",
+    )
+
     upload_clean = PythonOperator(
         task_id="upload_cleaned_csv",
         python_callable=upload_cleaned_csv,
@@ -107,4 +109,5 @@ with DAG(
         provide_context=True,
     )
 
-    upload_clean >> load_to_bq
+    # DAG sequence
+    wait_for_raw_file >> upload_clean >> load_to_bq
